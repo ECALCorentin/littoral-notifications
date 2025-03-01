@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Start.gg OAuth Login</title>
+</head>
+
+<body>
+    <h1>Login with Start.gg</h1>
+    <button id="login">Login</button>
+    <script>
+        const CLIENT_ID = "216";
+        const REDIRECT_URI = "http://localhost:5500/";
+        const AUTH_URL = "https://api.start.gg/oauth/authorize";
+        const RESPONSE_TYPE = "code";
+        const urlParams = new URLSearchParams(window.location.search);
+        const authCode = urlParams.get("code");
+
+        document.getElementById("login").addEventListener("click", () => {
+            const authUrl = `https://start.gg/oauth/authorize?client_id=216&redirect_uri=http%3A%2F%2Flocalhost%3A5500%2F&response_type=code`;
+            window.location.href = authUrl;
+        });
+
+        function authenticateUser(credentials) {
+            // Envoie une requête d'authentification (par exemple, avec fetch)
+            fetch('https://api.example.com/login', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(credentials)
+            })
+                .then(response => response.json())
+                .then(data => {
+                    // Assurez-vous que la réponse contient un access_token
+                    if (data.access_token) {
+                        // Stocke le token dans le localStorage ou sessionStorage
+                        localStorage.setItem('access_token', data.access_token);
+                        console.log('Token stocké dans localStorage');
+                    }
+                })
+                .catch(error => {
+                    console.error('Erreur d\'authentification:', error);
+                });
+        }
+
+
+        if (authCode) {
+            // Stocker le code temporairement (localStorage/sessionStorage) si nécessaire
+            sessionStorage.setItem("auth_code", authCode);
+
+            // Rediriger vers dashboard.html
+            window.location.href = "dashboard.html";
+        }
+    </script>
+
+
+</body>
+
+</html>

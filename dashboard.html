@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dash</title>
+
+    <script>
+        // Remplace `YOUR_ACCESS_TOKEN` par le token d'authentification de l'utilisateur
+        const token = localStorage.getItem('access_token');
+
+
+        // Récupère l'ID de l'événement "Solid Littoral"
+        fetch('http://localhost:5000/api', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                query: `
+            query {
+                viewer {
+                    tournaments(online: false) {
+                        nodes {
+                            id
+                            name
+                            events {
+                                nodes {
+                                    id
+                                    name
+                                    startAt
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        `
+            }),
+
+        })
+            .then(response => response.json())
+            .then(data => {
+                const event = data.data.viewer.tournaments.nodes
+                    .flatMap(tournament => tournament.events.nodes)
+                    .find(event => event.name === "Solid Littoral");
+
+                if (event) {
+                    // Récupère les matchs de cet événement
+                    fetch('https://api.start.gg/gql', {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            query: `
+                    query {
+                        event(id: "${event.id}") {
+                            sets(page: 1, perPage: 1, filter: {sort: "start_time"}) {
+                                nodes {
+                                    id
+                                    startAt
+                                    players {
+                                        nodes {
+                                            gamerTag
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                `
+                        })
+                    })
+                        .then(response => response.json())
+                        .then(data => {
+                            const nextMatch = data.data.event.sets.nodes[0];
+                            const matchDetails = `
+                Next Match: 
+                Player 1: ${nextMatch.players.nodes[0].gamerTag} 
+                VS
+                Player 2: ${nextMatch.players.nodes[1].gamerTag}
+                Time: ${new Date(nextMatch.startAt * 1000).toLocaleString()}
+            `;
+                            document.getElementById('nextMatch').innerText = matchDetails;
+                        });
+                }
+            })
+            .catch(error => console.error('Error:', error));
+
+    </script>
+</head>
+
+<body>
+    <h2>Dashboard</h2>
+
+    <div id="nextMatch"></div>
+</body>
+
+</html>
